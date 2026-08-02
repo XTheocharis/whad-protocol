@@ -1,0 +1,200 @@
+syntax = "proto3";
+
+package board;
+
+enum BoardCommand {
+    GetBoardInfo = 0x00;
+    ListSensors = 0x01;
+    ReadSensor = 0x02;
+    ConfigureStream = 0x03;
+    StopStream = 0x04;
+    Calibrate = 0x05;
+    GetCalibration = 0x06;
+    SetOutput = 0x07;
+    GetInputState = 0x08;
+    ConfigureInput = 0x09;
+    I2cTransfer = 0x0a;
+    GpioConfigure = 0x0b;
+    GpioRead = 0x0c;
+    GpioWrite = 0x0d;
+    AdcRead = 0x0e;
+    SpiTransfer = 0x0f;
+    StorageInfo = 0x10;
+    StorageAdopt = 0x11;
+    StorageReadLog = 0x12;
+    StorageEraseLog = 0x13;
+    GetRuntimeConfig = 0x14;
+    SetRuntimeConfig = 0x15;
+    SetRuntimeMode = 0x16;
+    RemoteProfileGet = 0x17;
+    RemoteProfileSet = 0x18;
+    AudioConfigure = 0x19;
+    ReleasePin = 0x1a;
+    RawPcmDiagnostics = 0x1b;
+}
+
+enum BoardResultCode {
+    SUCCESS = 0;
+    INVALID_ARGUMENT = 1;
+    WRONG_MODE = 2;
+    BUSY = 3;
+    NOT_FOUND = 4;
+    PERMISSION_DENIED = 5;
+    NOT_ADOPTED = 6;
+    SENSOR_FAULT = 7;
+    IO_ERROR = 8;
+    INTERNAL_ERROR = 9;
+    TIMEOUT = 10;
+    CHECKSUM = 11;
+    OVERFLOW = 12;
+    SOFTDEVICE_MISMATCH = 13;
+    NOT_IMPLEMENTED = 14;
+}
+
+enum SensorStatusFlag {
+    SENSOR_STATUS_NONE = 0;
+    SENSOR_STATUS_CALIBRATED = 0x01;
+    SENSOR_STATUS_CALIBRATING = 0x02;
+    SENSOR_STATUS_STALE = 0x04;
+    SENSOR_STATUS_SATURATED = 0x08;
+    SENSOR_STATUS_OVERRUN = 0x10;
+    SENSOR_STATUS_MAGNETIC_DISTURBANCE = 0x20;
+    SENSOR_STATUS_SENSOR_FAULT = 0x40;
+}
+
+enum BoardStatusCode {
+    BOARD_STATUS_UNKNOWN = 0;
+    BOARD_STATUS_RESOURCE_DISPLACED = 1;
+    BOARD_STATUS_RESOURCE_RESTORED = 2;
+    BOARD_STATUS_RESOURCE_RESTORE_FAILED = 3;
+    BOARD_STATUS_CALIBRATION_PROGRESS = 4;
+    BOARD_STATUS_STORAGE_PROGRESS = 5;
+    BOARD_STATUS_QUEUE_OVERFLOW = 6;
+    BOARD_STATUS_PERSISTENCE_UNAVAILABLE = 7;
+    BOARD_STATUS_RUNTIME_SWITCHING = 8;
+}
+
+enum RuntimeMode { RUNTIME_UNKNOWN = 0; RUNTIME_RAW_WHAD = 1; RUNTIME_BLE_HID = 2; }
+enum ResourceKind { RESOURCE_UNKNOWN = 0; RESOURCE_GPIO_PIN = 1; RESOURCE_I2C_BUS = 2; RESOURCE_SPI_BUS = 3; RESOURCE_ADC_CHANNEL = 4; RESOURCE_OUTPUT = 5; RESOURCE_STORAGE = 6; }
+enum OutputTarget { OUTPUT_UNKNOWN = 0; OUTPUT_BUZZER = 1; OUTPUT_NEOPIXEL = 2; OUTPUT_WHITE_LED = 3; OUTPUT_RED_LED = 4; OUTPUT_BACKLIGHT = 5; }
+enum InputMode { INPUT_MODE_UNKNOWN = 0; INPUT_MODE_DISABLED = 1; INPUT_MODE_GESTURE = 2; INPUT_MODE_AIR_MOUSE = 3; INPUT_MODE_REMOTE = 4; }
+enum InputSource { INPUT_SOURCE_UNKNOWN = 0; INPUT_SOURCE_BUTTON_A = 1; INPUT_SOURCE_BUTTON_B = 2; INPUT_SOURCE_APDS = 3; INPUT_SOURCE_MIC_THRESHOLD = 4; INPUT_SOURCE_IMU = 5; }
+enum InputAction { INPUT_ACTION_UNKNOWN = 0; INPUT_ACTION_PRESS = 1; INPUT_ACTION_RELEASE = 2; INPUT_ACTION_MOVE = 3; INPUT_ACTION_THRESHOLD = 4; }
+enum Gesture { GESTURE_UNKNOWN = 0; GESTURE_UP = 1; GESTURE_DOWN = 2; GESTURE_LEFT = 3; GESTURE_RIGHT = 4; GESTURE_NEAR = 5; GESTURE_FAR = 6; }
+enum GpioDirection { GPIO_DIRECTION_UNKNOWN = 0; GPIO_INPUT = 1; GPIO_OUTPUT = 2; }
+enum GpioPull { GPIO_PULL_UNKNOWN = 0; GPIO_PULL_NONE = 1; GPIO_PULL_UP = 2; GPIO_PULL_DOWN = 3; }
+enum SpiMode { SPI_MODE_UNKNOWN = 0; SPI_MODE_0 = 1; SPI_MODE_1 = 2; SPI_MODE_2 = 3; SPI_MODE_3 = 4; }
+enum StorageState { STORAGE_STATE_UNKNOWN = 0; STORAGE_UNADOPTED = 1; STORAGE_ADOPTING = 2; STORAGE_ADOPTED = 3; STORAGE_FAULT = 4; }
+
+message LeaseToken { ResourceKind resource = 1; uint32 instance = 2; uint32 generation = 3; uint32 owner = 4; }
+message CommandResult { BoardCommand command = 1; BoardResultCode result = 2; bool terminal = 3; string detail = 4; }
+message GetBoardInfoRequest {}
+message GetBoardInfoResponse { string board_name = 1; string hardware_revision = 2; string firmware_version = 3; string protocol_variant = 4; bytes device_id = 5; RuntimeMode active_runtime = 6; uint32 implemented_sensor_count = 7; }
+message ListSensorsRequest { uint32 cursor = 1; }
+message SensorDescriptor { uint32 sensor_id = 1; string name = 2; string unit = 3; uint32 value_count = 4; repeated string component_names = 5; uint32 default_rate_millihz = 6; uint32 min_rate_millihz = 7; uint32 max_rate_millihz = 8; repeated uint32 supported_rates_millihz = 9 [packed = true]; }
+message ListSensorsResponse { SensorDescriptor descriptor = 1; uint32 next_cursor = 2; bool eof = 3; }
+message ReadSensorRequest { uint32 sensor_id = 1; }
+message ConfigureStreamRequest { uint32 sensor_id = 1; uint32 rate_millihz = 2; uint32 flags = 3; }
+message ConfigureStreamResponse { uint32 sensor_id = 1; uint32 actual_rate_millihz = 2; uint32 flags = 3; }
+message StopStreamRequest { uint32 sensor_id = 1; }
+message CalibrateRequest { uint32 sensor_id = 1; uint32 flags = 2; bool persist = 3; }
+message GetCalibrationRequest { uint32 sensor_id = 1; }
+message CalibrationResponse { uint32 sensor_id = 1; uint32 version = 2; bytes calibration_data = 3; bool persisted = 4; uint32 crc32 = 5; }
+message SetOutputRequest { OutputTarget target = 1; uint32 value = 2; uint32 duration_ms = 3; bool stop = 4; bool force = 5; optional LeaseToken lease = 6; }
+message GetInputStateRequest {}
+message InputStateResponse { uint32 sequence = 1; uint64 timestamp_us = 2; uint32 buttons = 3; Gesture gesture = 4; bool microphone_threshold = 5; InputMode mode = 6; }
+message ConfigureInputRequest { InputMode mode = 1; uint32 flags = 2; uint32 dwell_ms = 3; uint32 deadzone = 4; bool persist = 5; }
+message I2cTransferRequest { uint32 address = 1; bytes write_data = 2; uint32 read_length = 3; bool repeated_start = 4; uint32 frequency_hz = 5; bool force = 6; optional LeaseToken lease = 7; }
+message I2cTransferResponse { BoardResultCode result = 1; bytes read_data = 2; LeaseToken lease = 3; uint32 bytes_written = 4; uint32 bytes_read = 5; }
+message GpioConfigureRequest { uint32 pin = 1; GpioDirection direction = 2; GpioPull pull = 3; bool initial_value = 4; bool force = 5; optional LeaseToken lease = 6; }
+message GpioConfigureResponse { BoardResultCode result = 1; uint32 pin = 2; LeaseToken lease = 3; }
+message GpioReadRequest { uint32 pin = 1; bool force = 2; optional LeaseToken lease = 3; }
+message GpioReadResponse { BoardResultCode result = 1; uint32 pin = 2; bool value = 3; optional LeaseToken lease = 4; }
+message GpioWriteRequest { uint32 pin = 1; bool value = 2; optional LeaseToken lease = 3; }
+message AdcReadRequest { uint32 channel = 1; uint32 samples = 2; }
+message AdcReadResponse { BoardResultCode result = 1; uint32 channel = 2; sint32 millivolts = 3; sint32 raw = 4; }
+message SpiTransferRequest { uint32 cs_pin = 1; uint32 frequency_hz = 2; SpiMode mode = 3; bytes tx_data = 4; uint32 read_length = 5; bool force = 6; optional LeaseToken lease = 7; }
+message SpiTransferResponse { BoardResultCode result = 1; bytes rx_data = 2; LeaseToken lease = 3; uint32 bytes_written = 4; uint32 bytes_read = 5; }
+message StorageInfoRequest {}
+message StorageInfoResponse { StorageState state = 1; uint32 capacity_bytes = 2; uint32 used_bytes = 3; uint32 log_records = 4; uint32 erase_size = 5; bytes jedec_id = 6; }
+message StorageAdoptRequest { uint32 confirm_nonce = 1; bool force = 2; }
+message StorageReadLogRequest { uint32 cursor = 1; uint32 max_bytes = 2; }
+message StorageEraseLogRequest { uint32 confirm_nonce = 1; }
+message GetRuntimeConfigRequest {}
+message RuntimeConfigResponse { RuntimeMode active_runtime = 1; RuntimeMode persisted_runtime = 2; bool persistence_available = 3; bool ble_advertising = 4; bool ble_pairable = 5; bool ble_connected = 6; uint32 bond_count = 7; uint32 event_log_filter = 8; uint32 raw_packet_log_filter = 9; }
+message RuntimeConfigUpdate { optional RuntimeMode persisted_runtime = 1; optional uint32 event_log_filter = 2; optional uint32 raw_packet_log_filter = 3; }
+message OpenPairingWindow { uint32 duration_ms = 1; }
+message ClearBonds { uint32 confirm_nonce = 1; }
+message SetRuntimeConfigRequest { oneof operation { RuntimeConfigUpdate update = 1; OpenPairingWindow open_pairing_window = 2; ClearBonds clear_bonds = 3; } }
+message SetRuntimeModeRequest { RuntimeMode runtime = 1; bool persist = 2; bool reboot = 3; }
+message RemoteProfileGetRequest { uint32 profile_id = 1; }
+message ProfileMapping { InputSource source = 1; InputAction action = 2; uint32 hid_usage_page = 3; uint32 hid_usage = 4; sint32 value = 5; }
+message RemoteProfile { uint32 profile_id = 1; string name = 2; uint32 sensitivity = 3; uint32 deadzone = 4; bool pointer_mode = 5; bool tilt_mode = 6; repeated ProfileMapping mappings = 7; }
+message RemoteProfileResponse { RemoteProfile profile = 1; }
+message RemoteProfileSetRequest { RemoteProfile profile = 1; bool persist = 2; }
+message AudioConfigureRequest { bool enabled = 1; uint32 sample_rate_hz = 2; sint32 gain_db_x2 = 3; uint32 flags = 4; }
+message AudioConfigureResponse { uint32 actual_sample_rate_hz = 1; sint32 actual_gain_db_x2 = 2; uint32 flags = 3; }
+message ReleasePinRequest { LeaseToken lease = 1; ResourceKind resource = 2; uint32 instance = 3; }
+message RawPcmDiagnosticsRequest { uint32 duration_ms = 1; uint32 chunk_size = 2; }
+
+message SensorSample { uint32 sensor_id = 1; uint32 sequence = 2; uint64 timestamp_us = 3; uint32 status = 4; repeated sfixed32 values = 5 [packed = true]; }
+message AudioChunk { uint32 sequence = 1; uint32 offset = 2; uint32 count = 3; bytes pcm = 4; bool eof = 5; uint32 total = 6; BoardResultCode result = 7; }
+message InputEvent { uint32 sequence = 1; uint64 timestamp_us = 2; InputSource source = 3; InputAction action = 4; sint32 value = 5; }
+message GestureEvent { uint32 sequence = 1; uint64 timestamp_us = 2; Gesture gesture = 3; }
+message LogChunk { uint32 sequence = 1; uint32 cursor = 2; uint32 offset = 3; uint32 count = 4; bytes data = 5; bool eof = 6; uint32 total = 7; BoardResultCode result = 8; }
+message BoardStatus { uint64 timestamp_us = 1; BoardStatusCode code = 2; BoardResultCode result = 3; ResourceKind resource = 4; uint32 instance = 5; uint32 progress_per_mille = 6; bool terminal = 7; string detail = 8; }
+
+message Message {
+    uint32 request_id = 1;
+    oneof msg {
+        GetBoardInfoRequest get_board_info = 2;
+        ListSensorsRequest list_sensors = 3;
+        ReadSensorRequest read_sensor = 4;
+        ConfigureStreamRequest configure_stream = 5;
+        StopStreamRequest stop_stream = 6;
+        CalibrateRequest calibrate = 7;
+        GetCalibrationRequest get_calibration = 8;
+        SetOutputRequest set_output = 9;
+        GetInputStateRequest get_input_state = 10;
+        ConfigureInputRequest configure_input = 11;
+        I2cTransferRequest i2c_transfer = 12;
+        GpioConfigureRequest gpio_configure = 13;
+        GpioReadRequest gpio_read = 14;
+        GpioWriteRequest gpio_write = 15;
+        AdcReadRequest adc_read = 16;
+        SpiTransferRequest spi_transfer = 17;
+        StorageInfoRequest storage_info = 18;
+        StorageAdoptRequest storage_adopt = 19;
+        StorageReadLogRequest storage_read_log = 20;
+        StorageEraseLogRequest storage_erase_log = 21;
+        GetRuntimeConfigRequest get_runtime_config = 22;
+        SetRuntimeConfigRequest set_runtime_config = 23;
+        SetRuntimeModeRequest set_runtime_mode = 24;
+        RemoteProfileGetRequest remote_profile_get = 25;
+        RemoteProfileSetRequest remote_profile_set = 26;
+        AudioConfigureRequest audio_configure = 27;
+        ReleasePinRequest release_pin = 28;
+        RawPcmDiagnosticsRequest raw_pcm_diagnostics = 29;
+        CommandResult command_result = 30;
+        GetBoardInfoResponse board_info = 31;
+        ListSensorsResponse sensor_descriptor = 32;
+        SensorSample sensor_sample = 33;
+        ConfigureStreamResponse stream_configured = 34;
+        CalibrationResponse calibration = 35;
+        InputStateResponse input_state = 36;
+        I2cTransferResponse i2c_result = 37;
+        GpioConfigureResponse gpio_configured = 38;
+        GpioReadResponse gpio_value = 39;
+        AdcReadResponse adc_value = 40;
+        SpiTransferResponse spi_result = 41;
+        StorageInfoResponse storage_status = 42;
+        RuntimeConfigResponse runtime_config = 43;
+        RemoteProfileResponse remote_profile = 44;
+        AudioConfigureResponse audio_configured = 45;
+        AudioChunk audio_chunk = 46;
+        InputEvent input_event = 47;
+        GestureEvent gesture_event = 48;
+        LogChunk log_chunk = 49;
+        BoardStatus board_status = 50;
+    }
+}

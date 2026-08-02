@@ -1,0 +1,29 @@
+# Results and status
+board.CommandResult.detail max_size:96
+board.BoardStatus.detail max_size:96
+
+# Board info and descriptors
+board.GetBoardInfoResponse.board_name max_size:32
+board.GetBoardInfoResponse.hardware_revision max_size:32
+board.GetBoardInfoResponse.firmware_version max_size:32
+board.GetBoardInfoResponse.protocol_variant max_size:32
+board.GetBoardInfoResponse.device_id max_size:16
+board.SensorDescriptor.name max_size:32
+board.SensorDescriptor.unit max_size:32
+board.SensorDescriptor.component_names max_count:10, max_size:16
+board.SensorDescriptor.supported_rates_millihz max_count:8
+board.SensorSample.values max_count:10
+board.CalibrationResponse.calibration_data max_size:128
+
+# Expert I/O
+board.I2cTransferRequest.write_data max_size:512
+board.I2cTransferResponse.read_data max_size:512
+board.SpiTransferRequest.tx_data max_size:512
+board.SpiTransferResponse.rx_data max_size:512
+
+# Storage, profiles, and chunks
+board.StorageInfoResponse.jedec_id max_size:3, fixed_length:true
+board.RemoteProfile.name max_size:32
+board.RemoteProfile.mappings max_count:16
+board.AudioChunk.pcm max_size:800
+board.LogChunk.data max_size:900
