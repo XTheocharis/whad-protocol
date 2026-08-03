@@ -119,7 +119,7 @@ hardware device can be used to achieve a specific task, no matter its firmware.
 
 ## What's different on the `clue` branch
 
-This is the `XTheocharis/whad-protocol` fork (branch `clue`) tracking `upstream/whad-team/whad-protocol#main`. The branch adds an **8th protocol domain — Board** — and is the schema-first source for the synchronized CLUE feature across all four WHAD repos. 3 commits ahead of upstream/main; merge base is `c9244c7` (2026-01-23).
+This is the `XTheocharis/whad-protocol` fork (branch `clue`) tracking `upstream/whad-team/whad-protocol#main`. The branch adds an **8th protocol domain — Board** — and is the schema-first source for the synchronized CLUE feature across all four WHAD repos.
 
 ### Board domain (`whad/protocol/board/`)
 - `board.proto` (200L) — **28 commands** (BoardCommand enum 0x00-0x1B, `GetBoardInfo` → `RawPcmDiagnostics`), **57 messages**, **15 enums** (RuntimeMode, ResourceKind, OutputTarget, InputMode/Source/Action, Gesture, GpioDirection/Pull, SpiMode, StorageState, BoardResultCode, SensorStatusFlag, BoardStatusCode). Resource leasing first-class via `LeaseToken{resource,instance,generation,owner}`. Top-level `Message` oneof has **49 fields**.
