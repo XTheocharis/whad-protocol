@@ -1,0 +1,21 @@
+name: Proto generation
+on:
+  push:
+    branches: [ "main", "clue" ]
+  pull_request:
+    branches: [ "main", "clue" ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install protoc + Python protoc
+        run: |
+          sudo apt-get update && sudo apt-get install -y protobuf-compiler python3-pip
+          pip3 install protobuf
+      - name: Generate protobuf outputs
+        run: make
+      - name: Validate board manifest
+        run: python3 tools/validate_board_manifest.py
